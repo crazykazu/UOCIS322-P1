@@ -48,7 +48,7 @@ identifying information.
 If you have concerns about adding your email ID, let me know.
 
   ```
-  ## Author: John Doe, jdoe@uoregon.edu ##
+  ## Author: Kazu Umemoto, kumemoto@uoregon.edu ##
   ```
 
 * Copy the credentials-skel.ini file to credentials.ini,

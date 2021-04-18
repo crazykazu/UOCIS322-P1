@@ -12,7 +12,7 @@
   located in ./pages  (where '.' is the directory from which this
   program is run).
 """
-
+import os
 import config    # Configure from .ini files and command line
 import logging   # Better than print statements
 logging.basicConfig(format='%(levelname)s:%(message)s',
@@ -77,7 +77,6 @@ STATUS_FORBIDDEN = "HTTP/1.0 403 Forbidden\n\n"
 STATUS_NOT_FOUND = "HTTP/1.0 404 Not Found\n\n"
 STATUS_NOT_IMPLEMENTED = "HTTP/1.0 401 Not Implemented\n\n"
 
-
 def respond(sock):
     """
     This server responds only to GET requests (not PUT, POST, or UPDATE).
@@ -90,12 +89,44 @@ def respond(sock):
     log.info("Request was {}\n***\n".format(request))
 
     parts = request.split()
+    log.info(str(parts))
+    options = get_options()
+    docroot = options.DOCROOT
     if len(parts) > 1 and parts[0] == "GET":
-        transmit(STATUS_OK, sock)
-        transmit(CAT, sock)
+        '''
+        So this first if statement just checks for ..
+        This is because on the extreme case that someone
+        just types in // the if statement is going to be 
+        looking way out of range so then it would error
+        '''
+        if((parts[1]) == '/'):
+            transmit(STATUS_OK, sock)
+            transmit(CAT, sock)
+        elif(('//' in parts[1]) or ('~' in parts[1]) or ('..' in parts[1])):
+            transmit(STATUS_FORBIDDEN, sock)
+            with open(docroot + '/error_403.html') as file:
+                transmit(file.read(), sock)
+        elif(os.path.isfile(docroot + parts[1])):
+            transmit(STATUS_OK, sock)
+            with open(docroot + parts[1]) as file:
+                transmit(file.read(), sock)
+        else:
+            transmit(STATUS_NOT_FOUND, sock)
+            with open(docroot + '/error_404.html') as file:
+                transmit(file.read(), sock)
+        '''
+        elif(parts[1] == '/trivia.css'):
+            transmit(STATUS_OK, sock)
+            with open(docroot + '/trivia.css') as file:
+                transmit(file.read(), sock)
+        elif(parts[1] == '/trivia.html'):
+            transmit(STATUS_OK, sock)
+            with open(docroot + '/trivia.html') as file:
+                transmit(file.read(), sock)
+        '''
     else:
         log.info("Unhandled request: {}".format(request))
-        transmit(STATUS_NOT_IMPLEMENTED, sock)
+        transmit(STATUS_NOT_IMPLEMENTED)
         transmit("\nI don't handle this request: {}\n".format(request), sock)
 
     sock.shutdown(socket.SHUT_RDWR)
